@@ -36,6 +36,7 @@ request.onsuccess = function(e) { db = e.target.result; renderLibraryUI(); };
 // --- 2. YOUTUBE IFRAME API & PLAYER LOGIC ---
 let ytPlayer;
 let isPlaying = false;
+let playerReady = false;
 let currentTrack = null;
 let progressInterval;
 
@@ -50,6 +51,7 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady(event) {
+    playerReady = true;
     console.log("YouTube Player is ready");
 }
 
@@ -152,7 +154,11 @@ function playMusic(videoId, encodedTrackData) {
 }
 
 function togglePlay() {
-    if (!ytPlayer) return;
+    if (!ytPlayer || !playerReady) {
+        console.log("Player belum siap");
+        return;
+    }
+
     if (isPlaying) {
         ytPlayer.pauseVideo();
     } else {
