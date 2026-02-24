@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>REN - Web Spotify</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#121212">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174872.png">
+    
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+
+    <div id="view-home" class="view-section active">
+        <div class="home-header">
+            <img src="ren.jpg" class="profile-icon" alt="Profile">
+            <div class="pill active">Semua</div>
+            <div class="pill">Musik</div>
+            <div class="pill">Podcast</div>
+        </div>
+        
+        <div class="section-container"><h2 class="section-title">Sering kamu dengarkan</h2><div class="vertical-list" id="recentList"><div style="color:#a7a7a7; font-size: 13px;">Memuat data...</div></div></div>
+        <div class="section-container"><h2 class="section-title">Rilis Anyar (Baru Rilis)</h2><div class="horizontal-scroll" id="rowAnyar"></div></div>
+        <div class="section-container"><h2 class="section-title">Gembira & Semangat</h2><div class="horizontal-scroll" id="rowGembira"></div></div>
+        <div class="section-container"><h2 class="section-title">Tangga Lagu Populer</h2><div class="horizontal-scroll" id="rowCharts"></div></div>
+        <div class="section-container"><h2 class="section-title">Galau Terpopuler</h2><div class="horizontal-scroll" id="rowGalau"></div></div>
+        <div class="section-container"><h2 class="section-title">Baru diputar</h2><div class="horizontal-scroll" id="rowBaru"></div></div>
+        <div class="section-container"><h2 class="section-title">Viral TikTok</h2><div class="horizontal-scroll" id="rowTiktok"></div></div>
+        <div class="section-container"><h2 class="section-title">Artis Terpopuler Saat Ini</h2><div class="horizontal-scroll" id="rowArtists"></div></div>
+        <div class="section-container"><h2 class="section-title">Hit terpopuler hari ini</h2><div class="horizontal-scroll" id="rowHitsHariIni"></div></div>
+        <div class="section-container"><h2 class="section-title">Dibuat Untuk TikTok</h2><div class="horizontal-scroll" id="rowUntukTiktok"></div></div>
+        <div class="section-container"><h2 class="section-title">Album dan single populer</h2><div class="horizontal-scroll" id="rowAlbumSingle"></div></div>
+    </div>
+
+    <div id="view-search" class="view-section">
+        <div class="search-header-container">
+            <img src="ren.jpg" class="profile-icon" alt="Profile">
+            <h1>Cari</h1>
+            <svg class="camera-icon" viewBox="0 0 24 24"><path d="M12 16a4 4 0 100-8 4 4 0 000 8zm0-2a2 2 0 110-4 2 2 0 010 4zM2.85 7h3.3l1.55-2.5h8.6L17.85 7h3.3C22.25 7 23 7.75 23 8.85v10.3c0 1.1-.75 1.85-1.85 1.85H2.85C1.75 21 1 20.25 1 19.15V8.85C1 7.75 1.75 7 2.85 7zm0 12h18.3V9H2.85v10z"></path></svg>
+        </div>
+        <div class="search-box-wrapper">
+            <svg class="search-icon-input" viewBox="0 0 24 24"><path d="M10.533 1.279c-5.18 0-9.407 4.14-9.407 9.279s4.226 9.279 9.407 9.279c2.234 0 4.29-.77 5.907-2.058l4.353 4.353a1 1 0 101.414-1.414l-4.344-4.344a9.157 9.157 0 002.077-5.816c0-5.14-4.226-9.279-9.407-9.279zm-7.407 9.279c0-4.006 3.302-7.279 7.407-7.279s7.407 3.273 7.407 7.279-3.302 7.279-7.407 7.279-7.407-3.273-7.407-7.279z"></path></svg>
+            <input type="text" class="search-box" id="searchInput" placeholder="Apa yang ingin kamu dengarkan?">
+        </div>
+        <div id="searchCategoriesUI">
+            <h2 class="section-title">Jelajahi semua</h2>
+            <div class="category-grid" id="categoryGrid"></div>
+        </div>
+        <div id="searchResultsUI" style="display: none;"><div class="vertical-list" id="searchResults"></div></div>
+    </div>
+
+    <div id="view-library" class="view-section">
+        <div class="lib-header">
+            <div class="lib-header-left">
+                <img src="ren.jpg" class="profile-icon" alt="Profile">
+                <h1 class="lib-title">Koleksi Kamu</h1>
+            </div>
+            <div class="lib-actions">
+                <svg viewBox="0 0 24 24"><path d="M10.533 1.279c-5.18 0-9.407 4.14-9.407 9.279s4.226 9.279 9.407 9.279c2.234 0 4.29-.77 5.907-2.058l4.353 4.353a1 1 0 101.414-1.414l-4.344-4.344a9.157 9.157 0 002.077-5.816c0-5.14-4.226-9.279-9.407-9.279zm-7.407 9.279c0-4.006 3.302-7.279 7.407-7.279s7.407 3.273 7.407 7.279-3.302 7.279-7.407 7.279-7.407-3.273-7.407-7.279z"></path></svg>
+                <svg viewBox="0 0 24 24" onclick="openCreatePlaylist()"><path d="M11 11V4h2v7h7v2h-7v7h-2v-7H4v-2h7z"></path></svg>
+            </div>
+        </div>
+        <div class="lib-filters"><div class="pill">Playlist</div></div>
+        <div class="lib-sort">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 16 16"><path d="M11.5 13.5L8 10l3.5-3.5V13.5zm-7-11L8 6 4.5 9.5V2.5z"></path></svg> Terakhir
+            </div>
+            <svg viewBox="0 0 16 16"><path d="M1 2h4v4H1V2zm10 0h4v4h-4V2zM1 10h4v4H1v-4zm10 0h4v4h-4v-4z"></path></svg>
+        </div>
+        <div class="lib-list" id="libraryContainer"></div>
+    </div>
+
+    <div id="view-artist" class="view-section">
+        <div style="padding: 40px 16px 20px; background: linear-gradient(to bottom, #4a4a4a, var(--bg-base)); display: flex; flex-direction: column; gap: 16px;">
+            <button class="back-btn" onclick="switchView('home')" style="background: rgba(0,0,0,0.5); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;">
+                <svg viewBox="0 0 24 24" style="fill:white; width:20px; height:20px;"><path d="M15.957 2.793a1 1 0 010 1.414L8.164 12l7.793 7.793a1 1 0 11-1.414 1.414L5.336 12l9.207-9.207a1 1 0 011.414 0z"></path></svg>
+            </button>
+            <h1 id="artistNameDisplay" style="font-size: 40px; font-weight: 800;">Nama Artis</h1>
+        </div>
+        <div class="play-pause-btn artist-play-btn" onclick="playFirstArtistTrack()">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+        </div>
+        <div class="section-container" style="margin-top: 24px;">
+            <h2 class="section-title" style="font-size: 18px;">Populer</h2>
+            <div class="vertical-list" id="artistTracksContainer"></div>
+        </div>
+    </div>
+
+    <div id="view-playlist" class="view-section">
+        <div style="padding: 20px 16px; background: linear-gradient(to bottom, #4a4a4a, var(--bg-base));">
+            <button class="back-btn" onclick="switchView('library')" style="background: rgba(0,0,0,0.5); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;">
+                <svg viewBox="0 0 24 24" style="fill:white; width:20px; height:20px;"><path d="M15.957 2.793a1 1 0 010 1.414L8.164 12l7.793 7.793a1 1 0 11-1.414 1.414L5.336 12l9.207-9.207a1 1 0 011.414 0z"></path></svg>
+            </button>
+            <div style="display: flex; justify-content: center; margin: 24px 0;">
+                <img id="playlistImageDisplay" src="" style="width: 240px; height: 240px; object-fit: cover; box-shadow: 0 12px 30px rgba(0,0,0,0.6);">
+            </div>
+            <h1 id="playlistNameDisplay" style="font-size: 26px; font-weight: 700; text-align: left; margin-bottom: 8px;">Nama Playlist</h1>
+            <div style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px;">Enjoy your Music</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <img src="ren.jpg" class="profile-icon" style="width: 24px; height: 24px;" alt="Profile">
+                <span style="font-size: 14px; font-weight: 700;">REN</span>
+            </div>
+            <div id="playlistStatsDisplay" style="font-size: 13px; color: var(--text-sub);">0 lagu disimpan</div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <svg style="width:24px; height:24px; fill:var(--spotify-green);" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                    <svg style="width:24px; height:24px; fill:var(--text-sub);" viewBox="0 0 24 24"><path d="M12 16l-4-4h3V4h2v8h3l-4 4zm9-13h-6v2h6v14H3V5h6V3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path></svg>
+                    <svg style="width:24px; height:24px; fill:var(--text-sub);" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+                </div>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <svg style="width:24px; height:24px; fill:var(--spotify-green);" viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"></path></svg>
+                    <div class="play-pause-btn" style="width: 56px; height: 56px;" onclick="playFirstPlaylistTrack()">
+                        <svg viewBox="0 0 24 24" style="fill: black; width: 28px; height: 28px;"><path d="M8 5v14l11-7z"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section-container" style="margin-top: 0; padding-top: 16px;">
+            <div class="vertical-list" id="playlistTracksContainer"></div>
+        </div>
+    </div>
+
+    <div id="view-developer" class="view-section">
+        <div class="dev-hero">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Tentang Aplikasi</h1>
+            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 40px;">Sistem Informasi & Pengembangan</p>
+        </div>
+        
+        <img src="ren.jpg" class="dev-profile-pic" alt="Dev Profile">
+        
+        <div style="text-align: center;">
+            <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 4px;">REN</h2>
+            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 12px;">Lead Developer & UI/UX Designer</p>
+            <div class="dev-badge">● Sistem Online (v2.3.0)</div>
+        </div>
+
+        <div class="section-container" style="padding: 0 16px;">
+            <button id="installAppBtn" class="dev-cta-btn install-pwa-btn">
+                <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:black;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                Install Aplikasi
+            </button>
+
+            <div class="dev-card">
+                <div class="dev-card-title">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                    Informasi Project
+                </div>
+                <p style="color: var(--text-sub); font-size: 14px; line-height: 1.6;">
+                    Aplikasi web <b>Web Music</b> dikembangkan khusus agar mudah di gunakan di semua platform. Memutar lagu real-time dari database global dengan sistem navigasi sekelas aplikasi native.
+                </p>
+            </div>
+
+            <div class="dev-card">
+                <div class="dev-card-title">
+                    <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"></path></svg>
+                    Spesifikasi Teknis
+                </div>
+                <ul class="dev-list">
+                    <li><span class="label">Frontend Core</span> <span class="value">HTML5 / CSS3 / JS</span></li>
+                    <li><span class="label">Backend API</span> <span class="value">FastAPI Python</span></li>
+                    <li><span class="label">Library Module</span> <span class="value">ytmusicapi</span></li>
+                    <li><span class="label">Local Storage</span> <span class="value">IndexedDB API</span></li>
+                    <li><span class="label">App Type</span> <span class="value">Progressive Web App</span></li>
+                    <li><span class="label">Cloud Server</span> <span class="value">Vercel Serverless</span></li>
+                </ul>
+            </div>
+
+            <a href="https://www.instagram.com/elnoreqiao" target="_blank" class="dev-cta-btn" style="margin-top: 24px;">
+               <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:black;">
+  <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 2A3.75 3.75 0 004 7.75v8.5A3.75 3.75 0 007.75 20h8.5A3.75 3.75 0 0020 16.25v-8.5A3.75 3.75 0 0016.25 4h-8.5zm4.25 3.5a4.75 4.75 0 110 9.5 4.75 4.75 0 010-9.5zm0 2a2.75 2.75 0 100 5.5 2.75 2.75 0 000-5.5zm4.75-2.25a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5z"/>
+</svg>
+                Follow IG Gweh :3
+            </a>
+
+            <div class="dev-footer-text">
+                Terbang tanpa Menjatuhkan.<br>Hak Cipta © 2026 REN.
+            </div>
+        </div>
+    </div>
+
+    <div id="miniPlayer" class="mini-player" onclick="expandPlayer()" style="display:none;">
+        <img id="miniPlayerImg" src="https://via.placeholder.com/40" alt="Cover">
+        <div class="mini-player-info">
+            <div id="miniPlayerTitle" class="mini-player-title">Judul Lagu</div>
+            <div id="miniPlayerArtist" class="mini-player-artist">Artis</div>
+        </div>
+        <div class="mini-player-controls" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24" onclick="openAddToPlaylistModal()"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
+            <svg id="miniPlayBtn" onclick="togglePlay()" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchView('home')">
+            <svg viewBox="0 0 24 24"><path d="M12.5 3.247a1 1 0 00-1 0L4 7.577V20h4.5v-6a1 1 0 011-1h5a1 1 0 011 1v6H20V7.577l-7.5-4.33zm-2-1.732a3 3 0 013 0l7.5 4.33a2 2 0 011 1.732V21a1 1 0 01-1 1h-6.5a1 1 0 01-1-1v-6h-3v6a1 1 0 01-1 1H3a1 1 0 01-1-1V7.577a2 2 0 011-1.732l7.5-4.33z"></path></svg> Home
+        </div>
+        <div class="nav-item" onclick="switchView('search')">
+            <svg viewBox="0 0 24 24"><path d="M10.533 1.279c-5.18 0-9.407 4.14-9.407 9.279s4.226 9.279 9.407 9.279c2.234 0 4.29-.77 5.907-2.058l4.353 4.353a1 1 0 101.414-1.414l-4.344-4.344a9.157 9.157 0 002.077-5.816c0-5.14-4.226-9.279-9.407-9.279zm-7.407 9.279c0-4.006 3.302-7.279 7.407-7.279s7.407 3.273 7.407 7.279-3.302 7.279-7.407 7.279-7.407-3.273-7.407-7.279z"></path></svg> Cari
+        </div>
+        <div class="nav-item" onclick="switchView('library')">
+            <svg viewBox="0 0 24 24"><path d="M14.5 2.134a1 1 0 011 0l6 3.464a1 1 0 01.5.866V21a1 1 0 01-1 1h-6a1 1 0 01-1-1V3a1 1 0 01.5-.866zM16 4.732V20h4V7.041l-4-2.309zM3 22a1 1 0 01-1-1V3a1 1 0 012 0v18a1 1 0 01-1 1zm6 0a1 1 0 01-1-1V3a1 1 0 012 0v18a1 1 0 01-1 1z"></path></svg> Koleksi Kamu
+        </div>
+        <div class="nav-item" onclick="switchView('developer')">
+            <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"></path></svg> Developer
+        </div>
+    </nav>
+
+    <div id="playerModal" class="modal-overlay">
+        <div id="playerBg"></div>
+        <div class="player-content-wrapper">
+            <div class="modal-header">
+                <svg viewBox="0 0 24 24" onclick="minimizePlayer()" style="fill:white; width:28px; height:28px; cursor:pointer;"><path d="M15.957 2.793a1 1 0 010 1.414L8.164 12l7.793 7.793a1 1 0 11-1.414 1.414L5.336 12l9.207-9.207a1 1 0 011.414 0z" transform="rotate(-90 12 12)"></path></svg>
+                <div style="text-align: center; display: flex; flex-direction: column;">
+                    <span style="font-size:10px; font-weight:400; letter-spacing:1px; text-transform:uppercase; color:white;">Memainkan Lagu</span>
+                    <span id="playerHeaderTitle" style="font-size:12px; font-weight:700; color:white;">SANN404 FORUM</span>
+                </div>
+                <svg viewBox="0 0 24 24" style="fill:white; width:24px; height:24px;"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+            </div>
+            
+            <div class="player-art-container">
+                <img id="playerArt" src="" alt="Album Art">
+            </div>
+            
+            <div class="player-track-info">
+                <div style="overflow: hidden; flex: 1; padding-right: 16px; text-align: left;">
+                    <div id="playerTitle" class="player-title">Judul Lagu</div>
+                    <div id="playerArtist" class="player-artist">Artis</div>
+                </div>
+                <svg id="btnLikeSong" viewBox="0 0 24 24" onclick="toggleLike()" style="width: 28px; height: 28px; flex-shrink:0; cursor:pointer; fill:white; margin-right: 16px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                <svg viewBox="0 0 24 24" onclick="openAddToPlaylistModal()" style="width: 28px; height: 28px; flex-shrink:0; cursor:pointer; fill:white;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>
+            </div>
+            
+            <div class="progress-container">
+                <input type="range" id="progressBar" class="progress-bar" value="0" min="0" max="100" step="1" oninput="seekTo(this.value)">
+                <div class="time-info">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
+                </div>
+            </div>
+            
+            <div class="playback-controls">
+                <svg viewBox="0 0 24 24" style="fill:var(--spotify-green); width:24px; height:24px;"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"></path></svg>
+                <svg viewBox="0 0 24 24" style="fill:white; width:36px; height:36px;"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
+                <div class="play-pause-btn" onclick="togglePlay()" style="width: 64px; height: 64px; border-radius: 50%; background: white; display: flex; justify-content: center; align-items: center; cursor: pointer;">
+                    <svg id="mainPlayBtn" viewBox="0 0 24 24" style="fill: black; width: 32px; height: 32px;"><path d="M8 5v14l11-7z"></path></svg>
+                </div>
+                <svg viewBox="0 0 24 24" style="fill:white; width:36px; height:36px;"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"></path></svg>
+                <svg viewBox="0 0 24 24" style="fill:var(--text-sub); width:24px; height:24px;"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"></path></svg>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 24px 30px;">
+                <svg viewBox="0 0 24 24" style="fill:white; width:20px; height:20px;"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-9 16h-2v-2h2v2zm1-4H8V4h10v10h-7v4z"></path></svg>
+                <div style="display: flex; gap: 24px;">
+                    <svg viewBox="0 0 24 24" style="fill:white; width:20px; height:20px;"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"></path></svg>
+                    <svg viewBox="0 0 24 24" style="fill:white; width:20px; height:20px;"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"></path></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createPlaylistModal" style="display:none;">
+        <div class="modal-overlay" style="display:flex;">
+            <div class="cp-box">
+                <div class="cp-title">Beri nama playlist barumu</div>
+                <input type="text" id="cpName" class="cp-input" placeholder="Playlist baruku">
+                <label for="cpImageInput">
+                    <img id="cpPreview" class="cp-img-preview" src="https://via.placeholder.com/120x120?text=+" alt="Upload">
+                </label>
+                <input type="file" id="cpImageInput" style="display:none;" accept="image/*" onchange="previewImage(event)">
+                <div class="cp-btn-row">
+                    <button class="cp-btn cancel" onclick="closeCreatePlaylist()">Batal</button>
+                    <button class="cp-btn save" onclick="saveNewPlaylist()">Buat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addToPlaylistModal" class="modal-overlay" style="display:none; justify-content:flex-end; background: rgba(0,0,0,0.8);">
+        <div style="background: #282828; width: 100%; height: 60vh; border-radius: 20px 20px 0 0; padding: 20px; display: flex; flex-direction: column; z-index: 10;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 700; color:white;">Tambahkan ke Playlist</h3>
+                <div onclick="closeAddToPlaylistModal()" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; color:white;">✕</div>
+            </div>
+            <div id="addToPlaylistList" class="vertical-list" style="overflow-y: auto; flex: 1; padding: 0;"></div>
+        </div>
+    </div>
+
+    <div id="customToast" class="toast-notification">Notifikasi</div>
+
+    <div id="youtube-player" style="display: none;"></div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
