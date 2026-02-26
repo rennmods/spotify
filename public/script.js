@@ -72,23 +72,28 @@ function onPlayerStateChange(event) {
     const pauseIconPath = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
 
     if (event.data == YT.PlayerState.PLAYING) {
-        isPlaying = true;
-        mainPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
-        miniPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
-        startProgressBar();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-    } else if (event.data == YT.PlayerState.PAUSED) {
-        isPlaying = false;
-        mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-        miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-        stopProgressBar();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-    } else if (event.data == YT.PlayerState.ENDED) {
-        isPlaying = false;
-        mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-        miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-        stopProgressBar();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+    isPlaying = true;
+    mainPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
+    miniPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
+    startProgressBar();
+
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+
+} else if (event.data == YT.PlayerState.PAUSED) {
+    isPlaying = false;
+    mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+    miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+    stopProgressBar();
+
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+
+} else if (event.data == YT.PlayerState.ENDED) {
+    isPlaying = false;
+    mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+    miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+    stopProgressBar();
+
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
         
         playNextSimilarSong();
     }
