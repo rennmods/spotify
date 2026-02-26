@@ -25,11 +25,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 // --- 1. INDEXEDDB SETUP (SannMusicDB) ---
 let db;
-const request = indexedDB.open("SannMusicDB", 1);
+const request = indexedDB.open("SannMusicDB", 2);
 request.onupgradeneeded = function(e) {
     db = e.target.result;
     if(!db.objectStoreNames.contains('playlists')) db.createObjectStore('playlists', { keyPath: 'id' });
     if(!db.objectStoreNames.contains('liked_songs')) db.createObjectStore('liked_songs', { keyPath: 'videoId' });
+    if(!db.objectStoreNames.contains('offline_downloads')) db.createObjectStore('offline_downloads', { keyPath: 'id' });
 };
 request.onsuccess = function(e) { db = e.target.result; renderLibraryUI(); };
 
@@ -40,15 +41,114 @@ let playerReady = false;
 let currentTrack = null;
 let progressInterval;
 
+// --- OFFLINE DOWNLOADS (semi-Spotify) ---
+let activePlayerType = 'yt'; // 'yt' | 'audio'
+const AUDIO_CACHE = 'audio-cache-v1';
+let audioPlayer;
+let downloadableCatalog = [];
+
+async function isAudioDownloaded(url) {
+    try {
+        const cache = await caches.open(AUDIO_CACHE);
+        return !!(await cache.match(url));
+    } catch { return false; }
+}
+
+async function downloadAudioTrack(track) {
+    if (!track || !track.audioUrl) return;
+
+    // cache audio
+    const url = track.audioUrl;
+    try {
+        // Prefer SW message (works even if page cache is restricted)
+        if (navigator.serviceWorker?.controller) {
+            await new Promise((resolve, reject) => {
+                const channel = new MessageChannel();
+                channel.port1.onmessage = (e) => e.data?.ok ? resolve(true) : reject(new Error(e.data?.error || 'Gagal cache audio'));
+                navigator.serviceWorker.controller.postMessage({ type: 'CACHE_AUDIO', url }, [channel.port2]);
+            });
+        } else {
+            const cache = await caches.open(AUDIO_CACHE);
+            await cache.add(url);
+        }
+
+        // save metadata
+        if (db) {
+            const tx = db.transaction('offline_downloads', 'readwrite');
+            tx.objectStore('offline_downloads').put({
+                id: track.id || track.videoId || url,
+                title: track.title || 'Unknown',
+                artist: track.artist || 'Unknown',
+                img: track.img || track.thumbnail || '',
+                audioUrl: url,
+                savedAt: Date.now(),
+            });
+        }
+
+        renderDownloadsUI();
+        alert('✅ Tersimpan untuk offline');
+    } catch (e) {
+        console.error(e);
+        alert('❌ Gagal download/simpan offline. Pastikan URL audio bisa diakses (mp3/ogg/m4a).');
+    }
+}
+
+async function removeDownloadedTrack(id, audioUrl) {
+    try {
+        if (audioUrl) {
+            const cache = await caches.open(AUDIO_CACHE);
+            await cache.delete(audioUrl);
+        }
+        if (db) {
+            const tx = db.transaction('offline_downloads', 'readwrite');
+            tx.objectStore('offline_downloads').delete(id);
+        }
+        renderDownloadsUI();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function ensureAudioPlayer() {
+    if (!audioPlayer) audioPlayer = document.getElementById('audioPlayer');
+    if (!audioPlayer) return;
+
+    // Bind once
+    if (!audioPlayer.__bound) {
+        audioPlayer.__bound = true;
+        audioPlayer.addEventListener('play', () => {
+            isPlaying = true;
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+            startProgressBar();
+        });
+        audioPlayer.addEventListener('pause', () => {
+            isPlaying = false;
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+            stopProgressBar();
+        });
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+            stopProgressBar();
+        });
+    }
+}
+
+async function loadDownloadableCatalog() {
+    try {
+        const res = await fetch('/catalog.json', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data)) downloadableCatalog = data;
+    } catch (e) {
+        // ignore if catalog not present
+    }
+}
+
+
 function onYouTubeIframeAPIReady() {
     ytPlayer = new YT.Player('youtube-player', {
-        height: '1', width: '1',
-        playerVars: {
-            playsinline: 1,
-            autoplay: 0,
-            controls: 0,
-            rel: 0
-        },
+        height: '0', width: '0',
         events: {
             'onReady': onPlayerReady,
             'onStateChange': onPlayerStateChange
@@ -71,28 +171,23 @@ function onPlayerStateChange(event) {
     const pauseIconPath = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
 
     if (event.data == YT.PlayerState.PLAYING) {
-    isPlaying = true;
-    mainPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
-    miniPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
-    startProgressBar();
-
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-
-} else if (event.data == YT.PlayerState.PAUSED) {
-    isPlaying = false;
-    mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-    miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-    stopProgressBar();
-
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-
-} else if (event.data == YT.PlayerState.ENDED) {
-    isPlaying = false;
-    mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-    miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
-    stopProgressBar();
-
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+        isPlaying = true;
+        mainPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
+        miniPlayBtn.innerHTML = `<path d="${pauseIconPath}"></path>`;
+        startProgressBar();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    } else if (event.data == YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+        miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+        stopProgressBar();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    } else if (event.data == YT.PlayerState.ENDED) {
+        isPlaying = false;
+        mainPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+        miniPlayBtn.innerHTML = `<path d="${playIconPath}"></path>`;
+        stopProgressBar();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
         
         playNextSimilarSong();
     }
@@ -141,6 +236,9 @@ async function playNextSimilarSong() {
 
 function playMusic(videoId, encodedTrackData) {
     currentTrack = JSON.parse(decodeURIComponent(encodedTrackData));
+    activePlayerType = 'yt';
+    ensureAudioPlayer();
+    if (audioPlayer && !audioPlayer.paused) { try { audioPlayer.pause(); } catch(e){} }
     checkIfLiked(currentTrack.videoId);
 
     document.getElementById('miniPlayer').style.display = 'flex';
@@ -159,23 +257,70 @@ function playMusic(videoId, encodedTrackData) {
         ytPlayer.loadVideoById(videoId);
     }
     
+    document.getElementById('progressBa
+function playAudio(encodedTrackData) {
+    currentTrack = JSON.parse(decodeURIComponent(encodedTrackData));
+    activePlayerType = 'audio';
+    ensureAudioPlayer();
+
+    checkIfLiked(currentTrack.id || currentTrack.videoId || currentTrack.audioUrl);
+
+    document.getElementById('miniPlayer').style.display = 'flex';
+    document.getElementById('miniPlayerImg').src = currentTrack.img;
+    document.getElementById('miniPlayerTitle').innerText = currentTrack.title;
+    document.getElementById('miniPlayerArtist').innerText = currentTrack.artist;
+
+    document.getElementById('playerArt').src = currentTrack.img;
+    document.getElementById('playerTitle').innerText = currentTrack.title;
+    document.getElementById('playerArtist').innerText = currentTrack.artist;
+    document.getElementById('playerBg').style.backgroundImage = `url('${currentTrack.img}')`;
+
+    updateMediaSession();
+
+    // Stop YouTube if running
+    if (ytPlayer && ytPlayer.pauseVideo) { try { ytPlayer.pauseVideo(); } catch(e){} }
+
+    if (!currentTrack.audioUrl) {
+        alert('Track ini belum punya audioUrl (mp3/ogg/m4a).');
+        return;
+    }
+
+    audioPlayer.src = currentTrack.audioUrl;
+    audioPlayer.play().catch(() => {
+        alert('Klik tombol Play sekali lagi (autoplay dibatasi browser).');
+    });
+
     document.getElementById('progressBar').value = 0;
     document.getElementById('currentTime').innerText = "0:00";
     document.getElementById('totalTime').innerText = "0:00";
 }
 
+r').value = 0;
+    document.getElementById('currentTime').innerText = "0:00";
+    document.getElementById('totalTime').innerText = "0:00";
+}
+
 function togglePlay() {
+    // Audio mode
+    if (activePlayerType === 'audio') {
+        ensureAudioPlayer();
+        if (!audioPlayer) return;
+
+        if (isPlaying) audioPlayer.pause();
+        else audioPlayer.play().catch(() => alert('Klik sekali lagi untuk memulai (autoplay dibatasi).'));
+        return;
+    }
+
+    // YouTube mode (default)
     if (!ytPlayer || !playerReady) {
         console.log("Player belum siap");
         return;
     }
 
-    if (isPlaying) {
-        ytPlayer.pauseVideo();
-    } else {
-        ytPlayer.playVideo();
-    }
+    if (isPlaying) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
 }
+
 
 function expandPlayer() {
     document.getElementById('playerModal').style.display = 'flex';
@@ -194,35 +339,58 @@ function formatTime(seconds) {
 function startProgressBar() {
     stopProgressBar();
     progressInterval = setInterval(() => {
-        if (ytPlayer && ytPlayer.getCurrentTime && ytPlayer.getDuration) {
-            const current = ytPlayer.getCurrentTime();
-            const duration = ytPlayer.getDuration();
-            
-            if (duration > 0) {
-                const percent = (current / duration) * 100;
-                const progressBar = document.getElementById('progressBar');
-                progressBar.value = percent;
-                progressBar.style.background = `linear-gradient(to right, white ${percent}%, rgba(255,255,255,0.2) ${percent}%)`;
-                
-                document.getElementById('currentTime').innerText = formatTime(current);
-                document.getElementById('totalTime').innerText = formatTime(duration);
+        let current = 0;
+        let duration = 0;
+
+        if (activePlayerType === 'audio') {
+            ensureAudioPlayer();
+            if (audioPlayer) {
+                current = audioPlayer.currentTime || 0;
+                duration = audioPlayer.duration || 0;
             }
+        } else {
+            if (ytPlayer && ytPlayer.getCurrentTime && ytPlayer.getDuration) {
+                current = ytPlayer.getCurrentTime() || 0;
+                duration = ytPlayer.getDuration() || 0;
+            }
+        }
+
+        if (duration > 0) {
+            const percent = (current / duration) * 100;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.value = percent;
+            progressBar.style.background = `linear-gradient(to right, white ${percent}%, rgba(255,255,255,0.2) ${percent}%)`;
+
+            document.getElementById('currentTime').innerText = formatTime(current);
+            document.getElementById('totalTime').innerText = formatTime(duration);
         }
     }, 1000);
 }
+
 
 function stopProgressBar() {
     clearInterval(progressInterval);
 }
 
 function seekTo(value) {
-    if (ytPlayer && ytPlayer.getDuration) {
-        const duration = ytPlayer.getDuration();
-        const seekTime = (value / 100) * duration;
-        ytPlayer.seekTo(seekTime, true);
-        const percent = value;
-        document.getElementById('progressBar').style.background = `linear-gradient(to right, white ${percent}%, rgba(255,255,255,0.2) ${percent}%)`;
+    const percent = value;
+
+    if (activePlayerType === 'audio') {
+        ensureAudioPlayer();
+        if (audioPlayer && audioPlayer.duration) {
+            const seekTime = (value / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = seekTime;
+        }
+    } else {
+        if (ytPlayer && ytPlayer.getDuration) {
+            const duration = ytPlayer.getDuration();
+            const seekTime = (value / 100) * duration;
+            ytPlayer.seekTo(seekTime, true);
+        }
     }
+
+    document.getElementById('progressBar').style.background =
+      `linear-gradient(to right, white ${percent}%, rgba(255,255,255,0.2) ${percent}%)`;
 }
 
 // --- CUSTOM TOAST NOTIFICATION ---
@@ -510,6 +678,132 @@ function renderLibraryUI() {
 }
 
 let currentPlaylistTracks = [];
+
+// --- Library tabs (Liked vs Downloads) ---
+function showLibraryTab(tab) {
+    const likedPill = document.getElementById('pill-liked');
+    const dlPill = document.getElementById('pill-downloads');
+    const liked = document.getElementById('libraryContainer');
+    const downloads = document.getElementById('downloadsContainer');
+
+    if (tab === 'downloads') {
+        likedPill?.classList.remove('pill-active');
+        dlPill?.classList.add('pill-active');
+        if (liked) liked.style.display = 'none';
+        if (downloads) downloads.style.display = 'block';
+        renderDownloadsUI();
+    } else {
+        dlPill?.classList.remove('pill-active');
+        likedPill?.classList.add('pill-active');
+        if (downloads) downloads.style.display = 'none';
+        if (liked) liked.style.display = 'block';
+        renderLibraryUI();
+    }
+}
+
+async function renderDownloadsUI() {
+    const container = document.getElementById('downloadsContainer');
+    if (!container) return;
+
+    ensureAudioPlayer();
+    await loadDownloadableCatalog();
+
+    // Read downloaded list from DB
+    let downloaded = [];
+    if (db) {
+        downloaded = await new Promise((resolve) => {
+            const tx = db.transaction('offline_downloads', 'readonly');
+            const req = tx.objectStore('offline_downloads').getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+        });
+    }
+
+    const downloadedMap = new Map(downloaded.map(d => [d.audioUrl, d]));
+
+    let html = '';
+    html += `
+      <div class="download-header">
+        <div class="download-chip">Mode: Download / Offline</div>
+        <button class="download-btn" onclick="renderDownloadsUI()">Refresh</button>
+      </div>
+      <div style="opacity:.8; font-size:13px; margin-bottom:10px;">
+        Lagu dari YouTube tetap butuh internet. Yang bisa offline hanya lagu yang punya <b>audioUrl</b> (mp3/ogg/m4a).
+      </div>
+    `;
+
+    // Downloaded section
+    html += `<div style="margin: 12px 0 6px; font-weight:700;">Tersimpan Offline</div>`;
+    if (!downloaded.length) {
+        html += `<div style="opacity:.7; font-size:13px; margin-bottom:14px;">Belum ada yang di-download.</div>`;
+    } else {
+        downloaded.forEach(d => {
+            const img = d.img || 'https://placehold.co/48x48/282828/FFFFFF?text=Music';
+            const trackData = encodeURIComponent(JSON.stringify({
+                id: d.id, title: d.title, artist: d.artist, img, audioUrl: d.audioUrl
+            }));
+            html += `
+              <div class="v-item" onclick="playAudio('${trackData}')">
+                <img src="${img}" class="v-img" onerror="this.src='https://placehold.co/48x48/282828/FFFFFF?text=Music'">
+                <div class="v-info">
+                  <div class="v-title">${d.title}</div>
+                  <div class="v-sub">${d.artist}</div>
+                </div>
+                <div class="track-actions" onclick="event.stopPropagation()">
+                  <button class="action-icon-btn" title="Hapus" onclick="removeDownloadedTrack('${d.id}', '${d.audioUrl}')">
+                    <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
+                  </button>
+                </div>
+              </div>
+            `;
+        });
+    }
+
+    // Catalog section
+    html += `<div style="margin: 18px 0 6px; font-weight:700;">Tersedia untuk Download</div>`;
+    if (!downloadableCatalog.length) {
+        html += `<div style="opacity:.7; font-size:13px;">
+          Belum ada <code>catalog.json</code>. Tambahkan file itu untuk daftar lagu mp3 yang bisa di-download.
+        </div>`;
+    } else {
+        for (const t of downloadableCatalog) {
+            const img = t.img || 'https://placehold.co/48x48/282828/FFFFFF?text=Music';
+            const audioUrl = t.audioUrl || '';
+            const isDl = audioUrl && downloadedMap.has(audioUrl);
+            const trackData = encodeURIComponent(JSON.stringify({
+                id: t.id || audioUrl,
+                title: t.title || 'Unknown',
+                artist: t.artist || 'Unknown',
+                img,
+                audioUrl
+            }));
+
+            html += `
+              <div class="v-item" onclick="playAudio('${trackData}')">
+                <img src="${img}" class="v-img" onerror="this.src='https://placehold.co/48x48/282828/FFFFFF?text=Music'">
+                <div class="v-info">
+                  <div class="v-title">${t.title || 'Unknown'}</div>
+                  <div class="v-sub">${t.artist || 'Unknown'}</div>
+                </div>
+                <div class="track-actions" onclick="event.stopPropagation()">
+                  <button class="download-btn" ${isDl ? 'disabled' : ''} onclick="downloadFromCatalog('${t.id || audioUrl}')">
+                    ${isDl ? '✅ Sudah' : '⬇ Download'}
+                  </button>
+                </div>
+              </div>
+            `;
+        }
+    }
+
+    container.innerHTML = html;
+}
+
+function downloadFromCatalog(id) {
+    const t = (downloadableCatalog || []).find(x => String(x.id || x.audioUrl) === String(id));
+    if (!t) return alert('Track tidak ditemukan di catalog');
+    downloadAudioTrack(t);
+}
+
 
 function openPlaylistView(id) {
     switchView('playlist');
