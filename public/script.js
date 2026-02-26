@@ -42,8 +42,7 @@ let progressInterval;
 
 function onYouTubeIframeAPIReady() {
     ytPlayer = new YT.Player('youtube-player', {
-        height: '1',
-        width: '1',
+        height: '1', width: '1',
         playerVars: {
             playsinline: 1,
             autoplay: 0,
@@ -51,8 +50,8 @@ function onYouTubeIframeAPIReady() {
             rel: 0
         },
         events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
         }
     });
 }
