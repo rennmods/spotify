@@ -62,7 +62,7 @@
                 <svg viewBox="0 0 24 24" onclick="openCreatePlaylist()"><path d="M11 11V4h2v7h7v2h-7v7h-2v-7H4v-2h7z"></path></svg>
             </div>
         </div>
-        <div class="lib-filters"><div class="pill">Playlist</div></div>
+        <div class="lib-filters"><div class="pill pill-active" id="pill-liked" onclick="showLibraryTab('liked')">Playlist</div><div class="pill" id="pill-downloads" onclick="showLibraryTab('downloads')">Download / Offline</div></div>
         <div class="lib-sort">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 16 16"><path d="M11.5 13.5L8 10l3.5-3.5V13.5zm-7-11L8 6 4.5 9.5V2.5z"></path></svg> Terakhir
@@ -70,6 +70,7 @@
             <svg viewBox="0 0 16 16"><path d="M1 2h4v4H1V2zm10 0h4v4h-4V2zM1 10h4v4H1v-4zm10 0h4v4h-4v-4z"></path></svg>
         </div>
         <div class="lib-list" id="libraryContainer"></div>
+        <div class="lib-list" id="downloadsContainer" style="display:none;"></div>
     </div>
 
     <div id="view-artist" class="view-section">
@@ -134,7 +135,7 @@
         <div style="text-align: center;">
             <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 4px;">REN</h2>
             <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 12px;">Lead Developer & UI/UX Designer</p>
-            <div class="dev-badge">● Sistem Online (v2.3.5)</div>
+            <div class="dev-badge">● Sistem Online (v2.3.0)</div>
         </div>
 
         <div class="section-container" style="padding: 0 16px;">
@@ -289,8 +290,12 @@
     </div>
 
     <div id="customToast" class="toast-notification">Notifikasi</div>
+
+    <div id="youtube-player" style="display: none;"></div>
+
     <div id="youtube-player"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
     <script src="/script.js"></script>
+    <audio id="audioPlayer" preload="metadata"></audio>
 </body>
 </html>
