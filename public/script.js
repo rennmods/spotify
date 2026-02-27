@@ -472,7 +472,7 @@ function renderLibraryUI() {
                         <img src="${p.img || 'https://via.placeholder.com/120?text=+'}" class="lib-item-img" onerror="this.src='https://via.placeholder.com/120?text=+'">
                         <div class="lib-item-info">
                             <div class="lib-item-title">${p.name}</div>
-                            <div class="lib-item-sub">Playlist • SANN404 FORUM</div>
+                            <div class="lib-item-sub">Playlist • REN PL</div>
                         </div>
                     </div>
                 `;
