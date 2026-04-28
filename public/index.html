@@ -3,25 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>REN - Web Spotify</title>
+    <title>REN Music — Modern Streaming UI</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#050505">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174872.png">
     
     <link rel="stylesheet" href="/style.css">
-    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
     <div id="view-home" class="view-section active">
         <div class="home-header">
-            <img src="ren.jpg" class="profile-icon" alt="Profile">
-            <div class="pill active">Semua</div>
-            <div class="pill">Musik</div>
-            <div class="pill">Podcast</div>
+            <div class="brand-lockup">
+                <img src="ren.jpg" class="profile-icon" alt="Profile">
+                <div>
+                    <span class="brand-kicker">REN MUSIC</span>
+                    <strong>For You</strong>
+                </div>
+            </div>
+            <div class="filter-group">
+                <button class="pill active" type="button">Semua</button>
+                <button class="pill" type="button">Musik</button>
+                <button class="pill" type="button">Podcast</button>
+            </div>
         </div>
+
+        <section class="hero-panel">
+            <div class="hero-copy">
+                <span class="hero-label">Streaming music experience</span>
+                <h1>Temukan lagu yang pas untuk mood kamu.</h1>
+                <p>Cari musik, simpan playlist, dan putar lagu dari satu tampilan yang lebih bersih, cepat, dan terasa seperti aplikasi native.</p>
+                <button class="hero-button" type="button" onclick="switchView('search')">Mulai cari lagu</button>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+                <img src="3403e1f706f9d5569398b55a35689eda.jpg" alt="">
+                <img src="7c730f04b939cb718bbdcb0ce3a7e00d.jpg" alt="">
+                <img src="1ced33a183cb33692d94252ad74fa4d9 (1).jpg" alt="">
+            </div>
+        </section>
         
-        <div class="section-container"><h2 class="section-title">Sering kamu dengarkan</h2><div class="vertical-list" id="recentList"><div style="color:#a7a7a7; font-size: 13px;">Memuat data...</div></div></div>
+        <div class="section-container featured-list"><h2 class="section-title">Sering kamu dengarkan</h2><div class="vertical-list" id="recentList"><div style="color:#a7a7a7; font-size: 13px;">Memuat data...</div></div></div>
         <div class="section-container"><h2 class="section-title">Rilis Anyar (Baru Rilis)</h2><div class="horizontal-scroll" id="rowAnyar"></div></div>
         <div class="section-container"><h2 class="section-title">Gembira & Semangat</h2><div class="horizontal-scroll" id="rowGembira"></div></div>
         <div class="section-container"><h2 class="section-title">Tangga Lagu Populer</h2><div class="horizontal-scroll" id="rowCharts"></div></div>
@@ -37,7 +58,10 @@
     <div id="view-search" class="view-section">
         <div class="search-header-container">
             <img src="ren.jpg" class="profile-icon" alt="Profile">
-            <h1>Cari</h1>
+            <div class="page-heading">
+                <span>Explore</span>
+                <h1>Cari</h1>
+            </div>
             <svg class="camera-icon" viewBox="0 0 24 24"><path d="M12 16a4 4 0 100-8 4 4 0 000 8zm0-2a2 2 0 110-4 2 2 0 010 4zM2.85 7h3.3l1.55-2.5h8.6L17.85 7h3.3C22.25 7 23 7.75 23 8.85v10.3c0 1.1-.75 1.85-1.85 1.85H2.85C1.75 21 1 20.25 1 19.15V8.85C1 7.75 1.75 7 2.85 7zm0 12h18.3V9H2.85v10z"></path></svg>
         </div>
         <div class="search-box-wrapper">
@@ -55,14 +79,17 @@
         <div class="lib-header">
             <div class="lib-header-left">
                 <img src="ren.jpg" class="profile-icon" alt="Profile">
-                <h1 class="lib-title">Koleksi Kamu</h1>
+                <div class="page-heading">
+                    <span>Your library</span>
+                    <h1 class="lib-title">Koleksi Kamu</h1>
+                </div>
             </div>
             <div class="lib-actions">
                 <svg viewBox="0 0 24 24"><path d="M10.533 1.279c-5.18 0-9.407 4.14-9.407 9.279s4.226 9.279 9.407 9.279c2.234 0 4.29-.77 5.907-2.058l4.353 4.353a1 1 0 101.414-1.414l-4.344-4.344a9.157 9.157 0 002.077-5.816c0-5.14-4.226-9.279-9.407-9.279zm-7.407 9.279c0-4.006 3.302-7.279 7.407-7.279s7.407 3.273 7.407 7.279-3.302 7.279-7.407 7.279-7.407-3.273-7.407-7.279z"></path></svg>
                 <svg viewBox="0 0 24 24" onclick="openCreatePlaylist()"><path d="M11 11V4h2v7h7v2h-7v7h-2v-7H4v-2h7z"></path></svg>
             </div>
         </div>
-        <div class="lib-filters"><div class="pill">Playlist</div></div>
+        <div class="lib-filters"><button class="pill active" type="button">Playlist</button></div>
         <div class="lib-sort">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 16 16"><path d="M11.5 13.5L8 10l3.5-3.5V13.5zm-7-11L8 6 4.5 9.5V2.5z"></path></svg> Terakhir
@@ -125,8 +152,9 @@
 
     <div id="view-developer" class="view-section">
         <div class="dev-hero">
+            <span class="hero-label">Project profile</span>
             <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Tentang Aplikasi</h1>
-            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 40px;">Sistem Informasi & Pengembangan</p>
+            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 40px;">Sistem informasi, UI/UX, dan pengembangan REN Music.</p>
         </div>
         
         <img src="ren.jpg" class="dev-profile-pic" alt="Dev Profile">
@@ -149,7 +177,7 @@
                     Informasi Project
                 </div>
                 <p style="color: var(--text-sub); font-size: 14px; line-height: 1.6;">
-                    Aplikasi web <b>Web Music</b> dikembangkan khusus agar mudah di gunakan di semua platform. Memutar lagu real-time dari database global dengan sistem navigasi sekelas aplikasi native.
+                    Aplikasi web <b>REN Music</b> didesain ulang agar terasa lebih bersih, responsif, dan nyaman dipakai di mobile maupun desktop. Sistem tetap mempertahankan pencarian musik real-time, playlist lokal, dan pengalaman PWA.
                 </p>
             </div>
 
@@ -172,7 +200,7 @@
                <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:black;">
   <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 2A3.75 3.75 0 004 7.75v8.5A3.75 3.75 0 007.75 20h8.5A3.75 3.75 0 0020 16.25v-8.5A3.75 3.75 0 0016.25 4h-8.5zm4.25 3.5a4.75 4.75 0 110 9.5 4.75 4.75 0 010-9.5zm0 2a2.75 2.75 0 100 5.5 2.75 2.75 0 000-5.5zm4.75-2.25a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5z"/>
 </svg>
-                Follow IG Gweh :3
+                Kunjungi Instagram
             </a>
 
             <div class="dev-footer-text">
@@ -291,7 +319,7 @@
     <div id="customToast" class="toast-notification">Notifikasi</div>
 
     <div id="youtube-player"></div>
-<script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/script.js"></script>
+<script src="/script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
